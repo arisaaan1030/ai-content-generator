@@ -1,0 +1,55 @@
+name: Generate Content
+
+on:
+  schedule:
+    # Batch API処理時間を考慮し、朝6時に開始（7時までに完了想定）
+    - cron: '0 21 * * *'    # UTC 21:00 = JST 06:00
+  workflow_dispatch:
+    inputs:
+      trending_topic:
+        description: 'Optional trending topic to include'
+        required: false
+        type: string
+      override_theme:
+        description: 'Optional theme override (leave empty for rotation)'
+        required: false
+        type: string
+
+permissions:
+  issues: write
+  contents: write
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45    # Includes Batch API wait time
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Generate content
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          TRENDING_TOPIC: ${{ inputs.trending_topic || '' }}
+          OVERRIDE_THEME: ${{ inputs.override_theme || '' }}
+        run: python -m src
+
+      - name: Commit post history
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/post_history.json
+          git diff --staged --quiet || git commit -m "chore: update post history $(date +%Y-%m-%d)"
+          git push

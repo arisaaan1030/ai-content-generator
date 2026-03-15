@@ -1,0 +1,72 @@
+# ═══════════════════════════════════════════════════════
+# AI Content Generator ── 全体設定
+# ═══════════════════════════════════════════════════════
+
+# ─── API設定 ───
+api:
+  # Claude モデル（推奨: claude-sonnet-4-20250514）
+  model: "claude-sonnet-4-20250514"
+  # 最大生成トークン数
+  max_tokens: 4096
+  # 創造性パラメータ（0.0=確定的、1.0=創造的）
+  temperature: 0.85
+  # Batch API を使用して50%コスト削減
+  use_batch_api: true
+  # Batch完了待ちの最大時間（秒）
+  batch_poll_timeout: 1800    # 30分
+  # Batch状態確認の間隔（秒）
+  batch_poll_interval: 30     # 30秒ごとにチェック
+
+# ─── セルフレビュー設定 ───
+# 生成されたコンテンツを自動レビュー（コスト増加のため デフォルト無効）
+review:
+  enabled: false
+  # 有効化する場合は以下を設定:
+  # model: "claude-haiku-4-5-20251001"
+  # max_tokens: 1024
+  # temperature: 0.3
+
+# ─── リトライ設定 ───
+# API呼び出し失敗時の自動リトライ
+retry:
+  max_retries: 3
+  backoff_factor: 2           # 1s → 2s → 4s
+  retry_on_status: [429, 500, 502, 503, 529]
+
+# ─── 品質基準 ───
+quality:
+  x_post:
+    min_chars: 140
+    max_chars: 280
+    max_hashtags: 2
+  note_article:
+    min_chars: 1500
+    max_chars: 3000
+
+# ─── 投稿履歴管理 ───
+history:
+  file_path: "data/post_history.json"
+  # 何日分を保持するか
+  keep_days: 30
+  # プロンプトに注入する直近の日数
+  recent_days: 7
+
+# ─── GitHub Issue設定 ───
+issue:
+  # Issueタイトルテンプレート（{date}, {theme} が置換される）
+  title_template: "📝 投稿案 ── {date}（{theme}）"
+  # Issueに自動付与されるラベル
+  labels:
+    - "generated"
+    - "content"
+
+# ─── スケジュール（参考用） ───
+schedule:
+  # Batch API使用時は結果取得まで30分程度かかるため、早めに実行
+  cron: "0 21 * * *"          # UTC 21:00 = JST 06:00（朝7時までに完了）
+  timezone: "Asia/Tokyo"
+
+# ─── ログ設定 ───
+logging:
+  level: "INFO"
+  format: "%(asctime)s [%(levelname)s] %(name)s: %(message)s"

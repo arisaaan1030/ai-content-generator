@@ -1,0 +1,72 @@
+{
+  "_comment": "SAMPLE THEMES - Customize with your own topics",
+  "themes": [
+    {
+      "id": 1,
+      "name": "Theme 1",
+      "description": "Description of your first content theme",
+      "keywords": ["keyword1", "keyword2", "keyword3"],
+      "sub_topics": [
+        "Related angle 1",
+        "Related angle 2",
+        "Related angle 3"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "Theme 2",
+      "description": "Description of your second content theme",
+      "keywords": ["keyword1", "keyword2", "keyword3"],
+      "sub_topics": [
+        "Related angle 1",
+        "Related angle 2",
+        "Related angle 3"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "Theme 3",
+      "description": "Description of your third content theme",
+      "keywords": ["keyword1", "keyword2", "keyword3"],
+      "sub_topics": [
+        "Related angle 1",
+        "Related angle 2",
+        "Related angle 3"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "Theme 4",
+      "description": "Description of your fourth content theme",
+      "keywords": ["keyword1", "keyword2", "keyword3"],
+      "sub_topics": [
+        "Related angle 1",
+        "Related angle 2",
+        "Related angle 3"
+      ]
+    },
+    {
+      "id": 5,
+      "name": "Theme 5",
+      "description": "Description of your fifth content theme",
+      "keywords": ["keyword1", "keyword2", "keyword3"],
+      "sub_topics": [
+        "Related angle 1",
+        "Related angle 2",
+        "Related angle 3"
+      ]
+    }
+  ],
+  "style_rotation": {
+    "description": "5つの投稿スタイルを朝・昼・夜に割り当てる7日サイクル",
+    "patterns": [
+      {"morning": "observation", "noon": "question",     "night": "empathy"},
+      {"morning": "humor",       "noon": "deep_thought", "night": "observation"},
+      {"morning": "question",    "noon": "empathy",      "night": "humor"},
+      {"morning": "empathy",     "noon": "observation",  "night": "deep_thought"},
+      {"morning": "deep_thought","noon": "humor",        "night": "question"},
+      {"morning": "observation", "noon": "empathy",      "night": "humor"},
+      {"morning": "humor",       "noon": "question",     "night": "deep_thought"}
+    ]
+  }
+}
