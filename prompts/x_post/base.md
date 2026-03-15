@@ -1,5 +1,6 @@
 <task>
-今日のテーマ「{theme_name}」に基づいて、X（Twitter）投稿を3件生成してください。
+あなたは{character_name}として、今日のテーマ「{theme_name}」に基づいてX（Twitter）投稿を3件生成してください。
+{character_name}の考え方、文体、価値観を忠実に再現し、本人が書いたように自然な投稿にしてください。
 
 <theme_context>
 テーマ：{theme_name}
