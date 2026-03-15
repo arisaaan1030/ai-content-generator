@@ -103,10 +103,12 @@ class QualitySettings:
 class ApiSettings:
     """API settings."""
 
+    provider: str = "anthropic"  # "anthropic" or "openai"
     model: str = "claude-sonnet-4-20250514"
+    review_model: str = "claude-haiku-4-5-20251001"
     max_tokens: int = 4096
     temperature: float = 0.85
-    # Batch API (50% cost reduction)
+    # Batch API (50% cost reduction, Anthropic only)
     use_batch_api: bool = True
     batch_poll_timeout: int = 1800  # 30 minutes
     batch_poll_interval: int = 30  # Poll every 30 seconds
@@ -324,7 +326,9 @@ def load_settings() -> Settings:
 
     return Settings(
         api=ApiSettings(
+            provider=api_raw.get("provider", "anthropic"),
             model=api_raw.get("model", "claude-sonnet-4-20250514"),
+            review_model=api_raw.get("review_model", "claude-haiku-4-5-20251001"),
             max_tokens=api_raw.get("max_tokens", 4096),
             temperature=api_raw.get("temperature", 0.85),
             use_batch_api=api_raw.get("use_batch_api", True),

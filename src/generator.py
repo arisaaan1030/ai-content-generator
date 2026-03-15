@@ -1,7 +1,7 @@
 """Content generation module.
 
-Call Anthropic API to generate X posts and note articles.
-Supports both Batch API (50% cost reduction) and standard API.
+Call Anthropic or OpenAI API to generate X posts and note articles.
+Supports both Batch API (50% cost reduction, Anthropic only) and standard API.
 """
 
 from __future__ import annotations
@@ -12,8 +12,6 @@ import random
 import time
 from pathlib import Path
 from typing import Any
-
-import anthropic
 
 from .config import (
     PROJECT_ROOT,
@@ -29,13 +27,30 @@ from .history import PostHistory, PostRecord, NoteRecord
 logger = logging.getLogger(__name__)
 
 
+def _create_client(provider: str) -> Any:
+    """Create API client based on provider setting."""
+    if provider == "openai":
+        try:
+            import openai
+            return openai.OpenAI()
+        except ImportError:
+            raise ImportError(
+                "OpenAI provider selected but 'openai' package not installed. "
+                "Run: pip install openai"
+            )
+    else:
+        import anthropic
+        return anthropic.Anthropic()
+
+
 class ContentGenerator:
     """Generate content based on character configuration."""
 
     def __init__(self, settings: Settings | None = None) -> None:
         self.settings = settings or load_settings()
         self.character = load_character()
-        self.client = anthropic.Anthropic()
+        self.provider = self.settings.api.provider
+        self.client = _create_client(self.provider)
         self._prompts_dir = PROJECT_ROOT / "prompts"
 
     def _read_prompt(self, relative_path: str) -> str:
@@ -130,7 +145,20 @@ class ContentGenerator:
     def _call_api(
         self, system_prompt: str, user_prompt: str
     ) -> str:
-        """Make standard API call with retry support."""
+        """Make standard API call with retry support.
+
+        Supports both Anthropic and OpenAI providers.
+        """
+        if self.provider == "openai":
+            return self._call_openai_api(system_prompt, user_prompt)
+        return self._call_anthropic_api(system_prompt, user_prompt)
+
+    def _call_anthropic_api(
+        self, system_prompt: str, user_prompt: str
+    ) -> str:
+        """Make Anthropic API call with retry support."""
+        import anthropic
+
         last_error: Exception | None = None
 
         for attempt in range(self.settings.retry.max_retries + 1):
@@ -158,6 +186,51 @@ class ContentGenerator:
                 time.sleep(wait)
 
             except anthropic.APIStatusError as e:
+                if e.status_code in self.settings.retry.retry_on_status:
+                    last_error = e
+                    wait = self.settings.retry.backoff_factor ** attempt
+                    logger.warning("API error %d, waiting %ds", e.status_code, wait)
+                    time.sleep(wait)
+                else:
+                    raise
+
+        raise RuntimeError(f"API call failed after retries: {last_error}")
+
+    def _call_openai_api(
+        self, system_prompt: str, user_prompt: str
+    ) -> str:
+        """Make OpenAI API call with retry support."""
+        import openai
+
+        last_error: Exception | None = None
+
+        for attempt in range(self.settings.retry.max_retries + 1):
+            try:
+                response = self.client.chat.completions.create(
+                    model=self.settings.api.model,
+                    max_tokens=self.settings.api.max_tokens,
+                    temperature=self.settings.api.temperature,
+                    messages=[
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": user_prompt},
+                    ],
+                )
+                text = response.choices[0].message.content
+                usage = response.usage
+                logger.info(
+                    "API call: input=%d, output=%d tokens",
+                    usage.prompt_tokens,
+                    usage.completion_tokens,
+                )
+                return text
+
+            except openai.RateLimitError as e:
+                last_error = e
+                wait = self.settings.retry.backoff_factor ** attempt
+                logger.warning("Rate limited, waiting %ds: %s", wait, e)
+                time.sleep(wait)
+
+            except openai.APIStatusError as e:
                 if e.status_code in self.settings.retry.retry_on_status:
                     last_error = e
                     wait = self.settings.retry.backoff_factor ** attempt
@@ -312,7 +385,7 @@ class ContentGenerator:
         )
         note_prompt = self._build_note_prompt(theme, history)
 
-        if self.settings.api.use_batch_api:
+        if self.settings.api.use_batch_api and self.provider == "anthropic":
             logger.info("Using Batch API (50%% cost reduction)")
             results = self._call_batch_api([
                 {

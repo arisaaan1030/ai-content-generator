@@ -17,7 +17,7 @@ character.yaml（あなたのプロフィール）
     ↓ 自動変換
 あなたの視点を再現するプロンプト生成
     ↓
-Anthropic API（Claude）で投稿を生成
+AI API（Claude or GPT-4o）で投稿を生成
     ↓
 X投稿3件（朝・昼・夜）+ note記事1件
     ↓
@@ -31,7 +31,9 @@ GitHub Issueとして投稿案を出力
 ## 必要なもの
 
 1. **GitHubアカウント**（無料） ── https://github.com
-2. **Anthropic APIキー** ── https://console.anthropic.com（最低$5でクレジット購入）
+2. **AIのAPIキー**（以下のいずれか）
+   - Anthropic（Claude） ── https://console.anthropic.com（最低$5でクレジット購入）
+   - OpenAI（GPT-4o） ── https://platform.openai.com（従量課金）
 3. **あなたのプロフィール**（考え方、口調、関心テーマなど）
 
 ## セットアップ手順
@@ -145,13 +147,22 @@ constraints:
 
 ### ステップ4: APIキーを設定
 
+**Anthropic（Claude）を使う場合**（デフォルト）：
+
 1. https://console.anthropic.com でアカウント作成
 2. クレジットを購入（最低$5、約2-3ヶ月分）
 3. APIキーを作成してコピー
 4. GitHubリポジトリ → **Settings** → **Secrets and variables** → **Actions**
-5. 「**New repository secret**」をクリック
-6. Name: `ANTHROPIC_API_KEY` / Secret: コピーしたAPIキー
-7. 「**Add secret**」
+5. 「**New repository secret**」→ Name: `ANTHROPIC_API_KEY` / Secret: コピーしたAPIキー
+
+**OpenAI（GPT-4o）を使う場合**：
+
+1. https://platform.openai.com でアカウント作成・クレジット追加
+2. APIキーを作成してコピー
+3. GitHubリポジトリ → **Settings** → **Secrets and variables** → **Actions**
+4. 「**New repository secret**」→ Name: `OPENAI_API_KEY` / Secret: コピーしたAPIキー
+5. `config/settings.yaml` を編集して `provider: "openai"` に変更
+6. `model` と `review_model` も OpenAI のモデル名に変更（下記「モデル選択」参照）
 
 ### ステップ5: テスト実行
 
@@ -209,24 +220,65 @@ schedule:
 | 投稿の例文を変える | `prompts/x_post/examples/*.md` |
 | 実行時間を変える | `.github/workflows/generate-posts.yml` |
 | note記事の構成を変える | `prompts/note_article/base.md` |
+| AIモデルを変える | `config/settings.yaml` の `provider` / `model` |
 | コストを調整する | `config/settings.yaml` |
 
-## コスト
+## モデル選択とコスト
 
-| 設定 | 月額目安 |
-|------|---------|
-| Batch API有効（デフォルト、おすすめ） | 約 ¥230/月 |
-| Batch API無効（即時生成） | 約 ¥460/月 |
+`config/settings.yaml` でプロバイダーとモデルを選べます。
 
-初回のクレジット購入は最低$5（約¥750）。2-3ヶ月分です。
+### 対応モデル一覧
+
+| プロバイダー | モデル名 | 用途 | 特徴 |
+|------------|---------|------|------|
+| Anthropic | `claude-sonnet-4-20250514` | 生成用（デフォルト） | 高品質。Batch APIで50%オフ |
+| Anthropic | `claude-haiku-4-5-20251001` | レビュー用（デフォルト） | 高速・低コスト |
+| OpenAI | `gpt-4o` | 生成用 | 高品質。Batch API非対応 |
+| OpenAI | `gpt-4o-mini` | 生成/レビュー用 | 超低コスト |
+
+### settings.yaml の設定例
+
+```yaml
+# Anthropic（デフォルト）
+api:
+  provider: "anthropic"
+  model: "claude-sonnet-4-20250514"
+  review_model: "claude-haiku-4-5-20251001"
+  use_batch_api: true
+
+# OpenAI
+api:
+  provider: "openai"
+  model: "gpt-4o"
+  review_model: "gpt-4o-mini"
+  use_batch_api: false  # OpenAIではBatch API未対応
+```
+
+### 月額コスト試算（毎日1回実行 = 30回/月）
+
+前提：1日あたり入力 ~8,000トークン、出力 ~5,000トークン（X投稿3件 + note記事1件）
+
+| 構成 | 月額目安 | 備考 |
+|------|---------|------|
+| **Claude Sonnet + Batch API** | **約 ¥220/月** | ⭐ おすすめ（デフォルト） |
+| Claude Sonnet（標準API） | 約 ¥450/月 | 即時生成が必要な場合 |
+| Claude Haiku + Batch API | 約 ¥60/月 | 最安のAnthropic構成 |
+| Claude Haiku（標準API） | 約 ¥120/月 | 低コスト + 即時生成 |
+| GPT-4o | 約 ¥320/月 | OpenAIの高品質モデル |
+| GPT-4o-mini | 約 ¥20/月 | 最安構成（品質はやや落ちる） |
+
+> コードレビュー（PR時のみ）は含まれていません。Haiku/mini使用で1回あたり数円程度です。
+
+> 1ドル ≈ 150円で換算。Anthropic初回クレジット購入は最低$5（約¥750）。
 
 ## 機能
 
 - 毎日自動でX投稿3件 + note記事1件の投稿案を生成
 - あなたのプロフィールからAIが自動でプロンプトを組み立て
+- Anthropic（Claude）/ OpenAI（GPT-4o）を選択可能
 - 5テーマ × 7日スタイル = 35パターンのローテーション
 - 投稿履歴で同じ内容の重複を防止
-- Batch APIで50%コスト削減
+- Batch APIで50%コスト削減（Anthropic使用時）
 - noteにそのままコピペできるフォーマット（スマホ対応）
 - PRへのAIコードレビュー自動実行
 
@@ -236,6 +288,8 @@ schedule:
 |------|-------|
 | 「credit balance is too low」 | Anthropic consoleでクレジットを購入 |
 | 「ANTHROPIC_API_KEY not set」 | ステップ4のSecret設定を確認 |
+| 「OPENAI_API_KEY not set」 | OpenAI使用時はOpenAIのAPI keyをSecretに設定 |
+| 「openai package not installed」 | OpenAI使用時は `pip install openai` が必要（GitHub Actionsでは `requirements.txt` の `openai` 行のコメントを外す） |
 | タイムアウト | Batch APIは最大15分かかることがあります。正常です |
 | 投稿が自分らしくない | `character.yaml` の `perspective` をより具体的に書く + `examples/` の例文を書き換える |
 

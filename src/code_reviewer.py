@@ -1,7 +1,8 @@
 """AI Code Review module.
 
-Send PR diff to Anthropic API and review code
+Send PR diff to API and review code
 from code quality, bug, and security perspectives.
+Supports both Anthropic and OpenAI providers.
 """
 
 from __future__ import annotations
@@ -15,8 +16,6 @@ import urllib.request
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
-
-import anthropic
 
 from .config import PROJECT_ROOT, Settings, load_settings
 
@@ -60,7 +59,19 @@ class CodeReviewer:
 
     def __init__(self, settings: Settings | None = None) -> None:
         self.settings = settings or load_settings()
-        self.client = anthropic.Anthropic()
+        self.provider = self.settings.api.provider
+        if self.provider == "openai":
+            try:
+                import openai
+                self.client = openai.OpenAI()
+            except ImportError:
+                raise ImportError(
+                    "OpenAI provider selected but 'openai' package not installed. "
+                    "Run: pip install openai"
+                )
+        else:
+            import anthropic
+            self.client = anthropic.Anthropic()
         self._prompt_path = PROJECT_ROOT / "prompts" / "review" / "code_review.md"
         self._token = os.environ.get("GITHUB_TOKEN", "")
         self._repo = os.environ.get("GITHUB_REPOSITORY", "")
@@ -165,25 +176,46 @@ class CodeReviewer:
         return diff[:max_chars] + "\n\n... (truncated due to size limit)"
 
     def _call_api(self, system_prompt: str, user_prompt: str) -> str:
-        """Call Anthropic API.
+        """Call API for code review.
 
         Uses standard API (not Batch) for immediate feedback.
-        Uses Haiku model to reduce costs.
+        Uses review_model from settings to reduce costs.
+        Supports both Anthropic and OpenAI providers.
         """
-        response = self.client.messages.create(
-            model="claude-haiku-4-5-20251001",
-            max_tokens=4096,
-            temperature=0.2,  # Low temperature for stability
-            system=system_prompt,
-            messages=[{"role": "user", "content": user_prompt}],
-        )
-        text = response.content[0].text
-        usage = response.usage
-        logger.info(
-            "Review API call: input=%d, output=%d tokens",
-            usage.input_tokens,
-            usage.output_tokens,
-        )
+        review_model = self.settings.api.review_model
+
+        if self.provider == "openai":
+            response = self.client.chat.completions.create(
+                model=review_model,
+                max_tokens=4096,
+                temperature=0.2,
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt},
+                ],
+            )
+            text = response.choices[0].message.content
+            usage = response.usage
+            logger.info(
+                "Review API call: input=%d, output=%d tokens",
+                usage.prompt_tokens,
+                usage.completion_tokens,
+            )
+        else:
+            response = self.client.messages.create(
+                model=review_model,
+                max_tokens=4096,
+                temperature=0.2,
+                system=system_prompt,
+                messages=[{"role": "user", "content": user_prompt}],
+            )
+            text = response.content[0].text
+            usage = response.usage
+            logger.info(
+                "Review API call: input=%d, output=%d tokens",
+                usage.input_tokens,
+                usage.output_tokens,
+            )
         return text
 
     def _parse_review_result(self, text: str) -> ReviewResult:
@@ -293,9 +325,10 @@ class CodeReviewer:
 
         # Footer
         lines.append("---")
+        review_model = self.settings.api.review_model
         lines.append(
-            "<sub>🤖 Reviewed by AI Code Reviewer "
-            "(Claude Haiku · `prompts/review/code_review.md`)</sub>"
+            f"<sub>🤖 Reviewed by AI Code Reviewer "
+            f"({review_model} · `prompts/review/code_review.md`)</sub>"
         )
 
         return "\n".join(lines)

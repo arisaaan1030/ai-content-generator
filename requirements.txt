@@ -1,2 +1,4 @@
 anthropic>=0.40.0
 pyyaml>=6.0
+# OpenAIを使う場合のみ必要（pip install openai）
+# openai>=1.0.0
