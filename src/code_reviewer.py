@@ -63,14 +63,26 @@ class CodeReviewer:
         if self.provider == "openai":
             try:
                 import openai
-                self.client = openai.OpenAI()
             except ImportError:
                 raise ImportError(
                     "OpenAI provider selected but 'openai' package not installed. "
                     "Run: pip install openai"
                 )
+            if not os.environ.get("OPENAI_API_KEY"):
+                raise RuntimeError(
+                    "OPENAI_API_KEY environment variable is not set. "
+                    "Please set it in GitHub Repository Settings → Secrets and variables → Actions, "
+                    "or export it locally before running."
+                )
+            self.client = openai.OpenAI()
         else:
             import anthropic
+            if not os.environ.get("ANTHROPIC_API_KEY"):
+                raise RuntimeError(
+                    "ANTHROPIC_API_KEY environment variable is not set. "
+                    "Please set it in GitHub Repository Settings → Secrets and variables → Actions, "
+                    "or export it locally before running."
+                )
             self.client = anthropic.Anthropic()
         self._prompt_path = PROJECT_ROOT / "prompts" / "review" / "code_review.md"
         self._token = os.environ.get("GITHUB_TOKEN", "")

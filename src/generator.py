@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import random
 import time
 from pathlib import Path
@@ -32,14 +33,26 @@ def _create_client(provider: str) -> Any:
     if provider == "openai":
         try:
             import openai
-            return openai.OpenAI()
         except ImportError:
             raise ImportError(
                 "OpenAI provider selected but 'openai' package not installed. "
                 "Run: pip install openai"
             )
+        if not os.environ.get("OPENAI_API_KEY"):
+            raise RuntimeError(
+                "OPENAI_API_KEY environment variable is not set. "
+                "Please set it in GitHub Repository Settings → Secrets and variables → Actions, "
+                "or export it locally before running."
+            )
+        return openai.OpenAI()
     else:
         import anthropic
+        if not os.environ.get("ANTHROPIC_API_KEY"):
+            raise RuntimeError(
+                "ANTHROPIC_API_KEY environment variable is not set. "
+                "Please set it in GitHub Repository Settings → Secrets and variables → Actions, "
+                "or export it locally before running."
+            )
         return anthropic.Anthropic()
 
 
