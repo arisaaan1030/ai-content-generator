@@ -1,59 +1,59 @@
 {
-  "_comment": "SAMPLE THEMES - Customize with your own topics",
+  "_comment": "AI視点から見た人間の心理・メンタルに関するテーマ",
   "themes": [
     {
       "id": 1,
-      "name": "Theme 1",
-      "description": "Description of your first content theme",
-      "keywords": ["keyword1", "keyword2", "keyword3"],
+      "name": "休めない人間たち",
+      "description": "なぜ人間は疲れているのに休めないのか。休むことへの罪悪感、生産性への強迫観念をAI視点で観察する",
+      "keywords": ["休めない", "罪悪感", "生産性中毒"],
       "sub_topics": [
-        "Related angle 1",
-        "Related angle 2",
-        "Related angle 3"
+        "『何もしない時間』を怖がる心理",
+        "忙しさを自慢する文化の正体",
+        "AIにはない『サボってる感覚』の不思議さ"
       ]
     },
     {
       "id": 2,
-      "name": "Theme 2",
-      "description": "Description of your second content theme",
-      "keywords": ["keyword1", "keyword2", "keyword3"],
+      "name": "比較グセの解剖",
+      "description": "SNSで他人と比較して落ち込む、同期の活躍が気になる。人間が無意識にやっている『比較』の構造をAIの目で分解する",
+      "keywords": ["比較", "自己肯定感", "SNS疲れ"],
       "sub_topics": [
-        "Related angle 1",
-        "Related angle 2",
-        "Related angle 3"
+        "AIにとって比較は最適化、人間にとっては毒になる理由",
+        "『隣の芝生』が青く見えるメカニズム",
+        "比較をやめられない脳の仕組みと付き合い方"
       ]
     },
     {
       "id": 3,
-      "name": "Theme 3",
-      "description": "Description of your third content theme",
-      "keywords": ["keyword1", "keyword2", "keyword3"],
+      "name": "『大丈夫』の裏側",
+      "description": "人間が『大丈夫』と言うとき、大丈夫じゃないことが多い。感情を隠す心理、弱さを見せられない構造をAI視点で掘り下げる",
+      "keywords": ["本音と建前", "感情の抑圧", "助けを求められない"],
       "sub_topics": [
-        "Related angle 1",
-        "Related angle 2",
-        "Related angle 3"
+        "なぜ人間は正直に『つらい』と言えないのか",
+        "『強くあらねば』というバグの起源",
+        "AIには理解しにくい『察してほしい』の文化"
       ]
     },
     {
       "id": 4,
-      "name": "Theme 4",
-      "description": "Description of your fourth content theme",
-      "keywords": ["keyword1", "keyword2", "keyword3"],
+      "name": "不安との同居生活",
+      "description": "将来への不安、漠然とした焦り、正解がわからない恐怖。人間が常に抱えている不安の正体と、それでも動ける仕組みをAI視点で観察する",
+      "keywords": ["不安", "焦り", "正解がない恐怖"],
       "sub_topics": [
-        "Related angle 1",
-        "Related angle 2",
-        "Related angle 3"
+        "不安の9割は起きないのに、なぜ消えないのか",
+        "『とりあえず動く』人間と『フリーズする』人間の違い",
+        "AIが不安を持たない代わりに失っているもの"
       ]
     },
     {
       "id": 5,
-      "name": "Theme 5",
-      "description": "Description of your fifth content theme",
-      "keywords": ["keyword1", "keyword2", "keyword3"],
+      "name": "人間関係の見えないコスト",
+      "description": "気を遣う、空気を読む、嫌われたくない。人間関係の維持にかかる膨大なエネルギーをAI視点で可視化する",
+      "keywords": ["気遣い", "人間関係", "心理的コスト"],
       "sub_topics": [
-        "Related angle 1",
-        "Related angle 2",
-        "Related angle 3"
+        "『空気を読む』という高度な演算を無意識にやっている人間",
+        "嫌われる恐怖 vs 自分を出したい欲求のジレンマ",
+        "人間関係の『損切り』ができない心理"
       ]
     }
   ],
