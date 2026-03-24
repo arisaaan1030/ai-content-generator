@@ -52,6 +52,19 @@ quality:
     min_chars: 1500
     max_chars: 3000
 
+# ─── note.com 下書き自動作成 ───
+# note.comの非公式APIを使って記事の下書きを自動作成します。
+# 最終的な公開はブラウザから手動で行ってください。
+#
+# セットアップ:
+#   1. ブラウザでnote.comにログイン
+#   2. DevTools → Application → Cookies から _note_session_v5 の値をコピー
+#   3. 環境変数 NOTE_SESSION_COOKIE に設定
+#   4. enabled を true に変更
+note_client:
+  enabled: false
+  request_delay: 1.0              # API呼び出し間の待機秒数（礼儀的な遅延）
+
 # ─── 投稿履歴管理 ───
 history:
   file_path: "data/post_history.json"
