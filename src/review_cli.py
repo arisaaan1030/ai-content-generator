@@ -21,8 +21,14 @@ def main() -> None:
     """Execute review."""
     logger.info("=== AI Code Review START ===")
 
-    reviewer = CodeReviewer()
-    result = reviewer.review_pr()
+    try:
+        reviewer = CodeReviewer()
+        result = reviewer.review_pr()
+    except Exception as e:
+        logger.error("Code review failed: %s", e)
+        logger.info("=== AI Code Review END (error) ===")
+        # Don't fail CI when review itself errors out
+        return
 
     logger.info(
         "Review result: score=%.1f, approved=%s, %d comments",

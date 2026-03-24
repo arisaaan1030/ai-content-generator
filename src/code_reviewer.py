@@ -11,6 +11,7 @@ import json
 import logging
 import os
 import subprocess
+import time
 import urllib.error
 import urllib.request
 from dataclasses import dataclass, field
@@ -176,47 +177,73 @@ class CodeReviewer:
         return diff[:max_chars] + "\n\n... (truncated due to size limit)"
 
     def _call_api(self, system_prompt: str, user_prompt: str) -> str:
-        """Call API for code review.
+        """Call API for code review with retry support.
 
         Uses standard API (not Batch) for immediate feedback.
         Uses review_model from settings to reduce costs.
         Supports both Anthropic and OpenAI providers.
         """
         review_model = self.settings.api.review_model
+        max_retries = self.settings.retry.max_retries
+        backoff_factor = self.settings.retry.backoff_factor
+        retry_on_status = self.settings.retry.retry_on_status
+        last_error: Exception | None = None
 
-        if self.provider == "openai":
-            response = self.client.chat.completions.create(
-                model=review_model,
-                max_tokens=4096,
-                temperature=0.2,
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_prompt},
-                ],
-            )
-            text = response.choices[0].message.content
-            usage = response.usage
-            logger.info(
-                "Review API call: input=%d, output=%d tokens",
-                usage.prompt_tokens,
-                usage.completion_tokens,
-            )
-        else:
-            response = self.client.messages.create(
-                model=review_model,
-                max_tokens=4096,
-                temperature=0.2,
-                system=system_prompt,
-                messages=[{"role": "user", "content": user_prompt}],
-            )
-            text = response.content[0].text
-            usage = response.usage
-            logger.info(
-                "Review API call: input=%d, output=%d tokens",
-                usage.input_tokens,
-                usage.output_tokens,
-            )
-        return text
+        for attempt in range(max_retries + 1):
+            try:
+                if self.provider == "openai":
+                    import openai
+
+                    response = self.client.chat.completions.create(
+                        model=review_model,
+                        max_tokens=4096,
+                        temperature=0.2,
+                        messages=[
+                            {"role": "system", "content": system_prompt},
+                            {"role": "user", "content": user_prompt},
+                        ],
+                    )
+                    text = response.choices[0].message.content
+                    usage = response.usage
+                    logger.info(
+                        "Review API call: input=%d, output=%d tokens",
+                        usage.prompt_tokens,
+                        usage.completion_tokens,
+                    )
+                else:
+                    import anthropic
+
+                    response = self.client.messages.create(
+                        model=review_model,
+                        max_tokens=4096,
+                        temperature=0.2,
+                        system=system_prompt,
+                        messages=[{"role": "user", "content": user_prompt}],
+                    )
+                    text = response.content[0].text
+                    usage = response.usage
+                    logger.info(
+                        "Review API call: input=%d, output=%d tokens",
+                        usage.input_tokens,
+                        usage.output_tokens,
+                    )
+                return text
+
+            except Exception as e:
+                last_error = e
+                status_code = getattr(e, "status_code", None)
+
+                if status_code in retry_on_status:
+                    wait = backoff_factor ** attempt
+                    logger.warning(
+                        "Review API error %s, retrying in %ds (attempt %d/%d): %s",
+                        status_code, wait, attempt + 1, max_retries, e,
+                    )
+                    time.sleep(wait)
+                else:
+                    raise
+
+        raise RuntimeError(f"Review API call failed after {max_retries} retries: {last_error}")
 
     def _parse_review_result(self, text: str) -> ReviewResult:
         """Parse review result from API response."""
