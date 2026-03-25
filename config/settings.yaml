@@ -56,11 +56,16 @@ quality:
 # note.comの非公式APIを使って記事の下書きを自動作成します。
 # 最終的な公開はブラウザから手動で行ってください。
 #
-# セットアップ:
-#   1. ブラウザでnote.comにログイン
-#   2. DevTools → Application → Cookies から _note_session_v5 の値をコピー
-#   3. 環境変数 NOTE_SESSION_COOKIE に設定
-#   4. enabled を true に変更
+# 認証方法（どちらかを設定）:
+#   方法A: メール/パスワード（推奨 — Cookieの自動更新あり）
+#     1. 環境変数 NOTE_EMAIL, NOTE_PASSWORD を設定
+#     2. セッションCookieは自動取得＆期限切れ時に自動更新
+#
+#   方法B: 手動Cookie
+#     1. ブラウザでnote.comにログイン
+#     2. DevTools → Application → Cookies → _note_session_v5 の値をコピー
+#     3. 環境変数 NOTE_SESSION_COOKIE に設定
+#     ※ Cookieの有効期限が切れたら手動で再取得が必要
 note_client:
   enabled: false
   request_delay: 1.0              # API呼び出し間の待機秒数（礼儀的な遅延）
