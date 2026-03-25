@@ -72,6 +72,15 @@ class CodeReviewer:
                 )
         else:
             import anthropic
+
+            api_key = os.environ.get("ANTHROPIC_API_KEY")
+            auth_token = os.environ.get("ANTHROPIC_AUTH_TOKEN")
+            if not api_key and not auth_token:
+                raise RuntimeError(
+                    "Anthropic authentication not configured. "
+                    "Set the ANTHROPIC_API_KEY or ANTHROPIC_AUTH_TOKEN "
+                    "environment variable."
+                )
             self.client = anthropic.Anthropic()
         self._prompt_path = PROJECT_ROOT / "prompts" / "review" / "code_review.md"
         self._token = os.environ.get("GITHUB_TOKEN", "")
