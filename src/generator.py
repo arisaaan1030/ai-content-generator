@@ -39,7 +39,18 @@ def _create_client(provider: str) -> Any:
                 "Run: pip install openai"
             )
     else:
+        import os
+
         import anthropic
+
+        api_key = os.environ.get("ANTHROPIC_API_KEY")
+        auth_token = os.environ.get("ANTHROPIC_AUTH_TOKEN")
+        if not api_key and not auth_token:
+            raise RuntimeError(
+                "Anthropic authentication not configured. "
+                "Set the ANTHROPIC_API_KEY or ANTHROPIC_AUTH_TOKEN "
+                "environment variable."
+            )
         return anthropic.Anthropic()
 
 
