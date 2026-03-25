@@ -25,6 +25,7 @@ from .config import (
 from .generator import ContentGenerator
 from .issue_creator import IssueCreator
 from .history import PostHistory, DailyRecord
+from .note_client import NoteClient
 
 # ─── Logging configuration ───
 logging.basicConfig(
@@ -80,6 +81,31 @@ def main() -> None:
     except Exception as e:
         logger.error("Content generation failed: %s", e)
         sys.exit(1)
+
+    # ─── Create note.com draft ───
+    if settings.note_client.enabled:
+        note_client = NoteClient(
+            request_delay=settings.note_client.request_delay,
+        )
+        if note_client.is_configured:
+            result = note_client.create_draft(
+                title=note_record.title, body_text=note_full_text
+            )
+            if result.status == "draft":
+                logger.info(
+                    "note.com draft created: %s (edit: %s)",
+                    result.note_id,
+                    result.edit_url,
+                )
+            else:
+                logger.warning(
+                    "note.com draft creation failed: %s",
+                    result.error_message,
+                )
+        else:
+            logger.warning(
+                "note.com draft skipped: NOTE_SESSION_COOKIE not set"
+            )
 
     # ─── Create GitHub Issue ───
     issue_creator = IssueCreator(settings)

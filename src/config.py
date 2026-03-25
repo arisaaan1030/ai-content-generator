@@ -133,6 +133,14 @@ class RetrySettings:
 
 
 @dataclass
+class NoteClientSettings:
+    """note.com draft creation settings."""
+
+    enabled: bool = False  # Disabled by default (requires cookie setup)
+    request_delay: float = 1.0  # Seconds between API requests
+
+
+@dataclass
 class Settings:
     """All settings."""
 
@@ -140,6 +148,7 @@ class Settings:
     review: ReviewSettings = field(default_factory=ReviewSettings)
     retry: RetrySettings = field(default_factory=RetrySettings)
     quality: QualitySettings = field(default_factory=QualitySettings)
+    note_client: NoteClientSettings = field(default_factory=NoteClientSettings)
     history_file: str = "data/post_history.json"
     history_keep_days: int = 30
     history_recent_days: int = 7
@@ -318,6 +327,7 @@ def load_settings() -> Settings:
     review_raw = raw.get("review", {})
     retry_raw = raw.get("retry", {})
     quality_raw = raw.get("quality", {})
+    note_client_raw = raw.get("note_client", {})
     history_raw = raw.get("history", {})
     issue_raw = raw.get("issue", {})
 
@@ -349,6 +359,10 @@ def load_settings() -> Settings:
             x_post_max_hashtags=x_post_raw.get("max_hashtags", 2),
             note_min_chars=note_raw.get("min_chars", 1500),
             note_max_chars=note_raw.get("max_chars", 3000),
+        ),
+        note_client=NoteClientSettings(
+            enabled=note_client_raw.get("enabled", False),
+            request_delay=note_client_raw.get("request_delay", 1.0),
         ),
         history_file=history_raw.get("file_path", "data/post_history.json"),
         history_keep_days=history_raw.get("keep_days", 30),
